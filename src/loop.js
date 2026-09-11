@@ -32,13 +32,8 @@ export async function runLoop(history, message, env) {
     { role: "user", content: message },
   ];
 
-  // One session id per turn, shared by every model call in this loop run,
-  // so the OpenCode Go endpoint can route and cache consistently.
-  const sessionId = crypto.randomUUID();
-
   let round = 0;
   while (round < MAX_ROUNDS) {
-    const assistant = await callModel(messages, env, sessionId);
     const assistant = await callModel(messages, env, sessionId);
     messages.push(assistant);
 
