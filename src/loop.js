@@ -1,9 +1,9 @@
 import { buildSystemPrompt } from "./prompt.js";
 import { toolDefinitions, executeTool } from "./tools.js";
 
-// TODO: set the base URL and model for your OpenAI-compatible provider.
-const LLM_BASE_URL = "TODO";
-const LLM_MODEL = "TODO";
+// OpenCode Go, OpenAI-compatible chat completions.
+const LLM_BASE_URL = "https://opencode.ai/zen/go/v1";
+const LLM_MODEL = "deepseek-v4-flash";
 
 const LLM_TIMEOUT_MS = 20_000;
 const MAX_ROUNDS = 8;
@@ -22,6 +22,9 @@ export async function runLoop(history, message, env) {
     return FALLBACK_REPLY;
   }
 
+  // All rounds of one turn share a session id.
+  const sessionId = crypto.randomUUID();
+
   const messages = [
     { role: "system", content: buildSystemPrompt() },
     ...history,
@@ -30,7 +33,7 @@ export async function runLoop(history, message, env) {
 
   let round = 0;
   while (round < MAX_ROUNDS) {
-    const assistant = await callModel(messages, env);
+    const assistant = await callModel(messages, env, sessionId);
     messages.push(assistant);
 
     const toolCalls = assistant.tool_calls ?? [];
@@ -53,12 +56,14 @@ export async function runLoop(history, message, env) {
   return "Uncle tried too many times already. Ask something simpler.";
 }
 
-async function callModel(messages, env) {
+async function callModel(messages, env, sessionId) {
   const res = await fetch(`${LLM_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${env.OPENCODE_API_KEY}`,
+      // OpenCode Go refuses requests without a session id.
+      "x-opencode-session": sessionId,
     },
     body: JSON.stringify({
       model: LLM_MODEL,
