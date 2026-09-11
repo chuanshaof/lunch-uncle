@@ -81,3 +81,32 @@ test("formatPlaces measures distance from CT Hub 2, not another region", () => {
   assert.equal(bedok.rating, null);
   assert.ok(bedok.distance_m > 6000, `got ${bedok.distance_m}`);
 });
+
+
+test("formatPlaces carries opening hours through, null when unknown", () => {
+  const places = [
+    {
+      displayName: { text: "211 Hainanese Chicken Rice" },
+      rating: 4.1,
+      location: { latitude: 1.3108, longitude: 103.8637 },
+      currentOpeningHours: { openNow: true },
+    },
+    {
+      displayName: { text: "Closed For Renovation Kopitiam" },
+      location: { latitude: 1.3108, longitude: 103.8637 },
+      currentOpeningHours: { openNow: false },
+    },
+    {
+      displayName: { text: "Hours Unknown Stall" },
+      location: { latitude: 1.3108, longitude: 103.8637 },
+    },
+  ];
+
+  const [open, closed, unknown] = formatPlaces(places, CT_HUB_2);
+
+  assert.equal(open.open_now, true);
+  assert.equal(closed.open_now, false);
+
+  // Absent hours must read as unknown, never as a default of open or closed.
+  assert.equal(unknown.open_now, null);
+});
