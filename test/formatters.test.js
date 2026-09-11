@@ -1,8 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  CT_HUB_2,
   formatForecast,
   formatBusArrivals,
+  formatPlaces,
   haversineMetres,
 } from "../src/tools.js";
 
@@ -54,4 +56,28 @@ test("haversineMetres measures CT Hub 2 to Lavender MRT at under 600 m", () => {
   const lavenderMrt = { latitude: 1.3073, longitude: 103.8631 };
   const distance = haversineMetres(ctHub2, lavenderMrt);
   assert.ok(distance > 400 && distance < 550, `got ${distance}`);
+});
+
+test("formatPlaces measures distance from CT Hub 2, not another region", () => {
+  const places = [
+    {
+      displayName: { text: "Swee Choon Tim Sum" },
+      rating: 4.3,
+      location: { latitude: 1.3078, longitude: 103.8567 },
+    },
+    {
+      displayName: { text: "Bedok 85 Fengshan" },
+      location: { latitude: 1.3236, longitude: 103.9273 },
+    },
+  ];
+
+  const [nearby, bedok] = formatPlaces(places, CT_HUB_2);
+
+  assert.equal(nearby.name, "Swee Choon Tim Sum");
+  assert.equal(nearby.rating, 4.3);
+  assert.ok(nearby.distance_m < 800, `got ${nearby.distance_m}`);
+
+  // A Bedok hawker centre is roughly 7 km away and must not read as walkable.
+  assert.equal(bedok.rating, null);
+  assert.ok(bedok.distance_m > 6000, `got ${bedok.distance_m}`);
 });
