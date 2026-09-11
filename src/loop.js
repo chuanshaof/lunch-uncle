@@ -8,8 +8,8 @@ const LLM_MODEL = "TODO";
 const LLM_TIMEOUT_MS = 20_000;
 const MAX_ROUNDS = 8;
 
-const FALLBACK_REPLY = "Just go Berseh Food Centre lah.";
-const FOOD_WORDS = /\b(eat|lunch|food|makan|hungry|restaurant|hawker)\b/i;
+const NO_SEARCH_REPLY =
+  "Uncle cannot search right now, the Places key is not set. Tell the person who deployed me.";
 
 /**
  * Run the agentic loop for one user turn and return Uncle's reply.
@@ -17,9 +17,10 @@ const FOOD_WORDS = /\b(eat|lunch|food|makan|hungry|restaurant|hawker)\b/i;
  * history is the prior conversation as OpenAI-style {role, content} messages.
  */
 export async function runLoop(history, message, env) {
-  // If the Places key is missing, Uncle cannot search, so give a safe answer.
-  if (!env.GOOGLE_PLACES_API_KEY || FOOD_WORDS.test(message)) {
-    return FALLBACK_REPLY;
+  // If the Places key is missing, Uncle cannot search, so say so plainly
+  // instead of inventing a recommendation.
+  if (!env.GOOGLE_PLACES_API_KEY) {
+    return NO_SEARCH_REPLY;
   }
 
   const messages = [
